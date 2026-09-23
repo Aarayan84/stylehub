@@ -10,14 +10,15 @@ import {
 
 function About() {
   const storeInfo = {
-    name: "Sushil Style Hub",
-    tagline: "Style that feels like you.",
-    email: "hello@stylehub.com",
-    phone: "+91 8626892047",
-    whatsapp: "+91 8626892047",
-    address: "Shop No. 24, Main Market, Near PNB Bank",
-    city: "Jangal Beri, Himachal Pradesh - 176109",
-    hours: "Monday - Friday, 10:00 AM - 6:00 PM",
+    name: import.meta.env.VITE_STORE_NAME,
+    tagline: import.meta.env.VITE_STORE_TAGLINE,
+    email: import.meta.env.VITE_STORE_EMAIL,
+    phone: import.meta.env.VITE_STORE_PHONE,
+    whatsapp: import.meta.env.VITE_STORE_WHATSAPP,
+    address: import.meta.env.VITE_STORE_ADDRESS,
+    city: import.meta.env.VITE_STORE_CITY,
+    hours: import.meta.env.VITE_STORE_HOURS,
+    map: import.meta.env.VITE_STORE_MAP,
   };
 
   return (
@@ -46,11 +47,11 @@ function About() {
       {/* About Store */}
       <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8">
         <div className="grid items-center gap-10 md:grid-cols-2 lg:gap-16">
-          {/* Image */}
+          {/* Shop Image */}
           <div className="overflow-hidden rounded-2xl bg-gray-100">
             <img
-              src="https://images.unsplash.com/photo-1445205170230-053b83016050"
-              alt="Sushil Style Hub clothing collection"
+              src="/shop.jpg"
+              alt={`${storeInfo.name} shop`}
               className="h-[380px] w-full object-cover sm:h-[480px]"
             />
           </div>
@@ -66,7 +67,7 @@ function About() {
             </h2>
 
             <p className="mt-5 text-sm leading-7 text-gray-600 sm:text-base">
-              Sushil Style Hub is a modern fashion store
+              {storeInfo.name} is a modern fashion store
               created for people who want to look good and
               feel comfortable without making fashion
               complicated.
@@ -207,7 +208,7 @@ function About() {
             </div>
 
             <a
-              href="https://maps.app.goo.gl/z7xgDohPn4DXffae9"
+              href={storeInfo.map}
               target="_blank"
               rel="noreferrer"
               className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-gray-200"
