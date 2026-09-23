@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { ShoppingBag } from "lucide-react";
@@ -47,6 +48,7 @@ function Navbar() {
     <>
       <nav className="sticky top-0 z-40 border-b border-gray-200 bg-white">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          {/* Logo */}
           <Link
             to="/"
             onClick={closeMenu}
@@ -55,8 +57,8 @@ function Navbar() {
             Sushil Style Hub
           </Link>
 
-          {/* Desktop */}
-          <div className="hidden items-center gap-5 xl:gap-7 md:flex">
+          {/* Desktop Navigation */}
+          <div className="hidden items-center gap-5 md:flex xl:gap-7">
             {links.map((link) => (
               <NavLink
                 key={link.name}
@@ -74,7 +76,7 @@ function Navbar() {
             ))}
           </div>
 
-          {/* Actions */}
+          {/* Desktop Actions */}
           <div className="hidden items-center gap-3 md:flex">
             <Link
               to="/login"
@@ -101,43 +103,60 @@ function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Button */}
-          <button
-            type="button"
-            onClick={() =>
-              setMenuOpen(!menuOpen)
-            }
-            className="rounded-lg p-2 text-gray-700 hover:bg-gray-100 md:hidden"
-            aria-label="Toggle menu"
-            aria-expanded={menuOpen}
-          >
-            <div className="space-y-1.5">
-              <span
-                className={`block h-0.5 w-6 bg-gray-800 transition ${
-                  menuOpen
-                    ? "translate-y-2 rotate-45"
-                    : ""
-                }`}
-              />
+          {/* Mobile Actions */}
+          <div className="flex items-center gap-1 md:hidden">
+            {/* Mobile Cart */}
+            <Link
+              to="/cart"
+              onClick={closeMenu}
+              className="relative rounded-lg p-2 text-gray-700 transition hover:bg-gray-100"
+              aria-label="Shopping Cart"
+            >
+              <ShoppingBag size={22} />
 
-              <span
-                className={`block h-0.5 w-6 bg-gray-800 transition ${
-                  menuOpen ? "opacity-0" : ""
-                }`}
-              />
+              {totalItems > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-black px-1 text-xs font-medium text-white">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
 
-              <span
-                className={`block h-0.5 w-6 bg-gray-800 transition ${
-                  menuOpen
-                    ? "-translate-y-2 -rotate-45"
-                    : ""
-                }`}
-              />
-            </div>
-          </button>
+            {/* Mobile Menu Button */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="rounded-lg p-2 text-gray-700 hover:bg-gray-100"
+              aria-label="Toggle menu"
+              aria-expanded={menuOpen}
+            >
+              <div className="space-y-1.5">
+                <span
+                  className={`block h-0.5 w-6 bg-gray-800 transition ${
+                    menuOpen
+                      ? "translate-y-2 rotate-45"
+                      : ""
+                  }`}
+                />
+
+                <span
+                  className={`block h-0.5 w-6 bg-gray-800 transition ${
+                    menuOpen ? "opacity-0" : ""
+                  }`}
+                />
+
+                <span
+                  className={`block h-0.5 w-6 bg-gray-800 transition ${
+                    menuOpen
+                      ? "-translate-y-2 -rotate-45"
+                      : ""
+                  }`}
+                />
+              </div>
+            </button>
+          </div>
         </div>
 
-        {/* Mobile */}
+        {/* Mobile Menu */}
         {menuOpen && (
           <div className="border-t border-gray-100 bg-white md:hidden">
             <div className="space-y-1 px-4 py-4">
@@ -158,6 +177,7 @@ function Navbar() {
                 </NavLink>
               ))}
 
+              {/* Admin */}
               <Link
                 to="/login"
                 onClick={closeMenu}
@@ -166,6 +186,7 @@ function Navbar() {
                 Admin
               </Link>
 
+              {/* Cart */}
               <Link
                 to="/cart"
                 onClick={closeMenu}
