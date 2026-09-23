@@ -63,6 +63,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    
+    imagePublicId: {
+      type: String,
+      default: "",
+    },
   },
   {
     timestamps: true,

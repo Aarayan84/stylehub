@@ -1,7 +1,10 @@
 const Product = require("../models/Product");
 const cloudinary = require("../config/cloudinary");
 
-// Upload image buffer to Cloudinary
+// =========================
+// Upload image to Cloudinary
+// =========================
+
 const uploadToCloudinary = (buffer) => {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -22,30 +25,96 @@ const uploadToCloudinary = (buffer) => {
   });
 };
 
+
+// =========================
+// Delete image from Cloudinary
+// =========================
+
+const deleteFromCloudinary = async (publicId) => {
+  if (!publicId) {
+    return;
+  }
+
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error(
+      "Cloudinary Delete Error:",
+      error
+    );
+  }
+};
+
+
+// =========================
+// Get public ID from old URL
+// =========================
+
+const getPublicIdFromUrl = (imageUrl) => {
+  if (!imageUrl) {
+    return "";
+  }
+
+  try {
+    const url = new URL(imageUrl);
+
+    const uploadIndex =
+      url.pathname.indexOf("/upload/");
+
+    if (uploadIndex === -1) {
+      return "";
+    }
+
+    let publicPath =
+      url.pathname.substring(
+        uploadIndex + "/upload/".length
+      );
+
+    // Remove Cloudinary transformations
+    // such as /f_auto,q_auto/
+    const parts = publicPath.split("/");
+
+    const versionIndex = parts.findIndex(
+      (part) => /^v\d+$/.test(part)
+    );
+
+    if (versionIndex !== -1) {
+      publicPath = parts
+        .slice(versionIndex + 1)
+        .join("/");
+    }
+
+    // Remove file extension
+    publicPath = publicPath.replace(
+      /\.[^/.]+$/,
+      ""
+    );
+
+    return publicPath;
+  } catch (error) {
+    console.error(
+      "Get Cloudinary Public ID Error:",
+      error
+    );
+
+    return "";
+  }
+};
+
+
 // =========================
 // Helper: Parse Sizes
 // =========================
 
 const parseSizes = (sizes, type) => {
-  /*
-   * General products do not need clothing sizes.
-   * We automatically store them as Free Size.
-   */
   if (type === "General") {
     return ["Free Size"];
   }
 
-  /*
-   * If sizes is already an array
-   */
   if (Array.isArray(sizes)) {
     return sizes;
   }
 
-  /*
-   * If sizes comes through FormData as a
-   * JSON string.
-   */
   if (typeof sizes === "string") {
     try {
       const parsed = JSON.parse(sizes);
@@ -58,11 +127,9 @@ const parseSizes = (sizes, type) => {
     }
   }
 
-  /*
-   * No sizes provided for clothing
-   */
   return [];
 };
+
 
 // =========================
 // Create Product
@@ -82,14 +149,8 @@ const createProduct = async (req, res) => {
       stock,
     } = req.body;
 
-    /*
-     * Product type
-     */
     const productType = type || "Clothing";
 
-    /*
-     * Validate product type
-     */
     if (
       !["Clothing", "General"].includes(
         productType
@@ -102,9 +163,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate title
-     */
     if (!title?.trim()) {
       return res.status(400).json({
         success: false,
@@ -112,9 +170,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate description
-     */
     if (!description?.trim()) {
       return res.status(400).json({
         success: false,
@@ -123,9 +178,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate category
-     */
     if (!category?.trim()) {
       return res.status(400).json({
         success: false,
@@ -133,9 +185,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Gender is required only for Clothing
-     */
     if (
       productType === "Clothing" &&
       !gender
@@ -147,9 +196,6 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Check image
-     */
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -157,24 +203,16 @@ const createProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Upload image to Cloudinary
-     */
+    // Upload image
     const result = await uploadToCloudinary(
       req.file.buffer
     );
 
-    /*
-     * Parse sizes
-     */
     const parsedSizes = parseSizes(
       sizes,
       productType
     );
 
-    /*
-     * Create product
-     */
     const product = await Product.create({
       type: productType,
 
@@ -184,9 +222,6 @@ const createProduct = async (req, res) => {
 
       category: category.trim(),
 
-      /*
-       * General products don't have a gender.
-       */
       gender:
         productType === "General"
           ? undefined
@@ -209,6 +244,9 @@ const createProduct = async (req, res) => {
           : Number(stock),
 
       image: result.secure_url,
+
+      // Store Cloudinary public ID
+      imagePublicId: result.public_id,
     });
 
     res.status(201).json({
@@ -230,6 +268,7 @@ const createProduct = async (req, res) => {
     });
   }
 };
+
 
 // =========================
 // Get All Products
@@ -258,6 +297,7 @@ const getProducts = async (req, res) => {
     });
   }
 };
+
 
 // =========================
 // Get Single Product
@@ -300,6 +340,7 @@ const getProductById = async (req, res) => {
   }
 };
 
+
 // =========================
 // Update Product
 // =========================
@@ -329,18 +370,9 @@ const updateProduct = async (req, res) => {
       stock,
     } = req.body;
 
-    /*
-     * Product type
-     *
-     * Keep existing type if the request doesn't
-     * contain one.
-     */
     const productType =
       type || product.type || "Clothing";
 
-    /*
-     * Validate type
-     */
     if (
       !["Clothing", "General"].includes(
         productType
@@ -353,9 +385,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate title
-     */
     if (!title?.trim()) {
       return res.status(400).json({
         success: false,
@@ -363,9 +392,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate description
-     */
     if (!description?.trim()) {
       return res.status(400).json({
         success: false,
@@ -374,9 +400,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Validate category
-     */
     if (!category?.trim()) {
       return res.status(400).json({
         success: false,
@@ -384,9 +407,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Gender required only for Clothing
-     */
     if (
       productType === "Clothing" &&
       !gender
@@ -398,9 +418,6 @@ const updateProduct = async (req, res) => {
       });
     }
 
-    /*
-     * Update normal fields
-     */
     product.type = productType;
 
     product.title = title.trim();
@@ -410,9 +427,6 @@ const updateProduct = async (req, res) => {
 
     product.category = category.trim();
 
-    /*
-     * General products don't have gender
-     */
     product.gender =
       productType === "General"
         ? undefined
@@ -432,29 +446,51 @@ const updateProduct = async (req, res) => {
         ? 0
         : Number(stock);
 
-    /*
-     * Update sizes
-     */
     product.sizes = parseSizes(
       sizes,
       productType
     );
 
-    /*
-     * If a new image was selected,
-     * upload it to Cloudinary.
-     */
+
+    // =========================
+    // Replace Product Image
+    // =========================
+
     if (req.file) {
+      // Save old image information first
+      const oldPublicId =
+        product.imagePublicId ||
+        getPublicIdFromUrl(product.image);
+
+      // Upload new image
       const result =
         await uploadToCloudinary(
           req.file.buffer
         );
 
+      // Update database with new image
       product.image =
         result.secure_url;
+
+      product.imagePublicId =
+        result.public_id;
+
+      await product.save();
+
+      // Delete old image after
+      // new image is successfully saved
+      if (
+        oldPublicId &&
+        oldPublicId !== result.public_id
+      ) {
+        await deleteFromCloudinary(
+          oldPublicId
+        );
+      }
+    } else {
+      await product.save();
     }
 
-    await product.save();
 
     res.status(200).json({
       success: true,
@@ -475,16 +511,16 @@ const updateProduct = async (req, res) => {
   }
 };
 
+
 // =========================
 // Delete Product
 // =========================
 
 const deleteProduct = async (req, res) => {
   try {
-    const product =
-      await Product.findByIdAndDelete(
-        req.params.id
-      );
+    const product = await Product.findById(
+      req.params.id
+    );
 
     if (!product) {
       return res.status(404).json({
@@ -493,10 +529,28 @@ const deleteProduct = async (req, res) => {
       });
     }
 
+    // Get Cloudinary public ID
+    // Works for both new and old products
+    const publicId =
+      product.imagePublicId ||
+      getPublicIdFromUrl(product.image);
+
+    // Delete image from Cloudinary
+    if (publicId) {
+      await deleteFromCloudinary(
+        publicId
+      );
+    }
+
+    // Delete product from MongoDB
+    await Product.findByIdAndDelete(
+      req.params.id
+    );
+
     res.status(200).json({
       success: true,
       message:
-        "Product deleted successfully",
+        "Product and product image deleted successfully",
     });
   } catch (error) {
     console.error(
@@ -506,10 +560,13 @@ const deleteProduct = async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: error.message,
+      message:
+        "Failed to delete product",
+      error: error.message,
     });
   }
 };
+
 
 module.exports = {
   createProduct,
