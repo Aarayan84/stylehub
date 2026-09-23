@@ -50,7 +50,7 @@ function About() {
           {/* Shop Image */}
           <div className="overflow-hidden rounded-2xl bg-gray-100">
             <img
-              src="/shop.jpg"
+              src="/about.jpeg"
               alt={`${storeInfo.name} shop`}
               className="h-[380px] w-full object-cover sm:h-[480px]"
             />
